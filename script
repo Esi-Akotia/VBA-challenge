@@ -1,0 +1,131 @@
+# Code used for assignment
+
+Sub StockCalculator()
+    
+    'declare all variables
+    Dim i As Long
+    Dim j As Long
+    Dim lastrow As Long
+    Dim vol_sum As LongLong
+    Dim sumrow As Long
+    Dim start_row As Double
+    Dim opening As Double
+    Dim closing As Double
+    Dim yr_change As Double
+    Dim percent_change As Double
+    Dim lastsumrow As Long
+    Dim ws As Worksheet
+    
+    For Each ws In Worksheets
+   
+    'name all columns
+    ws.Range("J1").Value = "Ticker"
+    ws.Range("M1").Value = "Total Stock Volume"
+    ws.Range("K1").Value = "Yearly Change"
+    ws.Range("L1").Value = "Percentage Change"
+    ws.Range("P2").Value = "Greatest % Increase"
+    ws.Range("P3").Value = "Greatest % Decrease"
+    ws.Range("P4").Value = "Greatest Total Volume"
+    ws.Range("Q1").Value = "Ticker"
+    ws.Range("R1").Value = "Value"
+    
+    'assign varriables
+    lastrow = ws.Range("A1").End(xlDown).Row
+    lastsumrow = ws.Range("J2").End(xlDown).Row
+    vol_sum = 0
+    sumrow = 2
+    start_row = 2
+    
+    'begin loop
+    For i = 2 To lastrow
+       
+        'conditional: if the ticker value changes, then run some calculations
+        If (ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value) Then
+            
+            'calculate the sum of stock volume
+            vol_sum = vol_sum + ws.Cells(i, 7).Value
+            
+            'save the opening and closing rates as variables
+            opening = ws.Cells(start_row, 3).Value
+            closing = ws.Cells(i, 6).Value
+            
+            'calculate the yearly change
+            yr_change = closing - opening
+         
+                'calculate the percentage change if opening rate is not zero to avoid error
+                If (ws.Cells(i, 3).Value <> 0) Then
+                    percent_change = (closing / opening) - 1
+                Else
+                    percent_change = 0
+                End If
+           
+            'reset the value for opening rate to the next cell
+            start_row = i + 1
+            
+            'show the results of calculation in a summary table & apply the right format
+            ws.Cells(sumrow, 10).Value = ws.Cells(i, 1).Value
+            ws.Cells(sumrow, 11).Value = yr_change
+            ws.Cells(sumrow, 11).Style = "Currency"
+            ws.Cells(sumrow, 12).Value = percent_change
+            ws.Cells(sumrow, 12).NumberFormat = "0.00%"
+            ws.Cells(sumrow, 13).Value = vol_sum
+                
+                'include conditional formatting for negative & positive values
+                If (ws.Cells(sumrow, 11) < 0) Then
+                    ws.Cells(sumrow, 11).Interior.ColorIndex = 3
+                Else
+                    ws.Cells(sumrow, 11).Interior.ColorIndex = 4
+                End If
+                
+                If (ws.Cells(sumrow, 12) < 0) Then
+                    ws.Cells(sumrow, 12).Interior.ColorIndex = 3
+                Else
+                    ws.Cells(sumrow, 12).Interior.ColorIndex = 4
+                End If
+            
+            'reset the summary row value to the next one
+            sumrow = sumrow + 1
+            
+            'reset the sum of volume to zero
+            vol_sum = 0
+            
+        'otherwise, if the ticker value is the same, keep a sum total of all the stock volumes
+        Else
+            vol_sum = vol_sum + ws.Cells(i, 7)
+            
+        End If
+        
+    'repeat for all rows
+    Next i
+ 
+    'find the max & min values in the summary table and show the results in assigned cells
+    ws.Range("R2").Value = WorksheetFunction.Max(ws.Range("L2:L" & lastsumrow))
+    ws.Range("R3").Value = WorksheetFunction.Min(ws.Range("L2:L" & lastsumrow))
+    ws.Range("R4").Value = WorksheetFunction.Max(ws.Range("M2:M" & lastsumrow))
+    ws.Range("R2").NumberFormat = "0.00%"
+    ws.Range("R3").NumberFormat = "0.00%"
+    
+    
+    'find the corresponding ticker number and display in assigned cells
+    For j = 2 To lastsumrow
+    
+        If ws.Cells(j, 12).Value = ws.Range("R2").Value Then
+            ws.Range("Q2").Value = ws.Cells(j, 10).Value
+               
+        End If
+        
+        If ws.Cells(j, 12).Value = ws.Range("R3").Value Then
+            ws.Range("Q3").Value = ws.Cells(j, 10).Value
+            
+        End If
+        
+        If ws.Cells(j, 13).Value = ws.Range("R4").Value Then
+            ws.Range("Q4").Value = ws.Cells(j, 10).Value
+            
+        End If
+
+    Next j
+     
+    Next ws
+    
+End Sub
